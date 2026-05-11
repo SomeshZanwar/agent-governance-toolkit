@@ -24,7 +24,6 @@ namespace AgentGovernance.Examples.AspNetMiddleware;
 public sealed class GovernanceCheckMiddleware
 {
     private const string AnonymousAgentId = "did:agentmesh:http-anonymous";
-    private const string AgentIdHeader = "X-Agent-Id";
 
     private readonly RequestDelegate _next;
     private readonly GovernanceKernel _kernel;
@@ -35,9 +34,9 @@ public sealed class GovernanceCheckMiddleware
         GovernanceKernel kernel,
         ILogger<GovernanceCheckMiddleware> logger)
     {
-        _next = next;
-        _kernel = kernel;
-        _logger = logger;
+        _next = next ?? throw new ArgumentNullException(nameof(next));
+        _kernel = kernel ?? throw new ArgumentNullException(nameof(kernel));
+        _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
     public async Task InvokeAsync(HttpContext context)
@@ -133,21 +132,26 @@ public sealed class GovernanceCheckMiddleware
 
     private static string ResolveAgentId(HttpContext context)
     {
-        // Prefer an authenticated identity when present.
+        // The agent identity comes from the authenticated user populated by
+        // ASP.NET Core's authentication middleware (JWT bearer, cookies,
+        // mTLS client certificates, OIDC, etc.). Wire whichever scheme your
+        // deployment uses upstream of this middleware so `context.User`
+        // carries a verified identity by the time governance evaluates.
+        // Unauthenticated requests fall through to the anonymous DID, where
+        // policy rules can apply blanket allow/deny on `agent_id`.
+        //
+        // An earlier revision of this example also accepted a caller-supplied
+        // ``X-Agent-Id`` header as a fallback. That was an identity-spoof
+        // vector — anyone setting the header became any DID for governance
+        // purposes — and was removed. If you genuinely need a header-based
+        // identity (dev/test against a deployment that hasn't wired up
+        // authentication yet), do it in a *separate* middleware that runs
+        // BEFORE the auth pipeline and that you only register in
+        // non-production environments.
         var name = context.User?.Identity?.Name;
         if (!string.IsNullOrWhiteSpace(name))
         {
             return $"did:agentmesh:{name}";
-        }
-
-        // Fall back to a caller-supplied header (illustrative — tighten for production).
-        if (context.Request.Headers.TryGetValue(AgentIdHeader, out var headerValues))
-        {
-            var headerValue = headerValues.ToString();
-            if (!string.IsNullOrWhiteSpace(headerValue))
-            {
-                return headerValue;
-            }
         }
 
         return AnonymousAgentId;
