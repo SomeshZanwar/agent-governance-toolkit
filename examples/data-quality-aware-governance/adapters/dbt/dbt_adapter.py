@@ -22,7 +22,12 @@ def load_from_dbt_run_results(
     classification: str | None = None,
     quality_profile_id: str | None = None,
 ) -> DataQualityEvidence:
-    """Load DataQualityEvidence from a dbt run_results.json artifact."""
+    """Load example-level data quality evidence from a dbt run_results.json artifact.
+
+The adapter derives freshness from metadata.generated_at, computes validation
+status from dbt test result statuses, collects failed test names, and returns
+a DataQualityEvidence object that can be evaluated alongside AGT policy checks.
+"""
     path = Path(run_results_path)
     if not path.exists():
         raise FileNotFoundError(f"dbt run_results.json not found: {path}")
