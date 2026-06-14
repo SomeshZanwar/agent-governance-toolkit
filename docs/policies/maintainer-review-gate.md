@@ -8,7 +8,7 @@ For PRs where this workflow applies, the gate fires when the PR does not yet hav
 
 ## Why this is not a CI failure
 
-A red result from this workflow means the PR is awaiting policy review. It is not a test, build, lint, or dependency failure. The workflow is intentionally labeled as a policy gate so contributors know the next action is review, not debugging CI.
+This workflow reports an informational policy notice when a maintainer approval is still missing. It is not a test, build, lint, or dependency failure. The policy is merge-blocking through branch protection requiring code-owner review.
 
 ## How to satisfy it
 

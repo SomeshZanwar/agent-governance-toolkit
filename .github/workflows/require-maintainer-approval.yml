@@ -45,9 +45,9 @@ jobs:
             );
 
             if (!maintainerApproval) {
-              core.setFailed(
+              core.notice(
                 `Policy: this PR is awaiting a named-maintainer review.\n` +
-                `This is a policy gate, not a CI failure — the PR is mergeable once a named maintainer (see CODEOWNERS or .github/MAINTAINERS) approves.\n` +
+                `This is a policy signal, not a CI failure — merge-blocking enforcement comes from branch protection requiring code-owner review.\n` +
                 `For more details, see docs/policies/maintainer-review-gate.md.`
               );
             } else {
